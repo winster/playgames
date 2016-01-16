@@ -1,0 +1,79 @@
+<html>
+    <head>
+      <link rel="stylesheet" href="css/bootstrap.min.css" crossorigin="anonymous">
+      <link rel="stylesheet" href="css/app.css"></link>
+      <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    </head>
+    <body>
+        <div class="table-responsive">
+            <table class="table"> 
+                <thead> 
+                    <tr> 
+                        <th>NAME</th> 
+                        <th>DECKS</th>
+                        <th>POINT VALUE(&#8377;)</th> 
+                        <th>MIN ENTRY(&#8377;)</th> 
+                        <th>STATUS</th>
+                        <th>SITTING</th>
+                        <th>ACTION</th>   
+                    </tr> 
+                </thead> 
+                <tbody id="tournaments"> 
+                </tbody> 
+            </table>
+        </div>
+        <script id="tournamentTpl" type="text/template">
+                <td class="name"></td>
+                <td class="decks"></td>
+                <td class="point"></td>
+                <td class="entrymin"></td>
+                <td class="status"></td>
+                <td class="sitting"></td>
+                <td class="action">
+                    <button type="button" class="btn btn-primary">Join</button>
+                </td>            
+        </script>
+        <script>
+
+            var cols = ['name', 'decks', 'point','entrymin','status','sitting','action'];
+            function populateTournaments(tournaments){
+                var tbody=document.getElementById("tournaments");
+                tournaments.map(function(tournament){
+                    var tournamentTpl=document.getElementById("tournamentTpl").innerHTML;
+                    console.log(tournament); 
+                    var row=document.createElement("tr");
+                    cols.map(function(col) {
+                        var position = tournamentTpl.indexOf(col)+col.length+2;
+                        tournamentTpl = [tournamentTpl.slice(0, position), tournament[col], tournamentTpl.slice(position)].join('');
+                    
+                    });
+                    row.id = tournament.id;
+                    row.innerHTML = tournamentTpl;
+                    tbody.appendChild(row);
+                });
+            }
+            window.addEventListener('load', function() {
+                var host = location.origin.replace(/^http/, 'ws');
+                var ws = new WebSocket(host);
+                ws.onmessage = function (event) {
+                    var message = JSON.parse(event.data);
+                    if(message){
+                        if(message.type==='launch') {
+                            populateTournaments(message.data);
+                        } else if(message.type==='new') {
+                            console.log(message);
+                            var arr = [];
+                            arr.push(message);
+                            populateTournaments(arr);
+                        } else if(message.type==='delta') {
+                            console.log(message);
+                            var elt = document.getElementById(message.id);
+                            var point = elt.querySelector('.'+message.col);
+                            point.textContent = message.val;
+                        }
+                    }
+                };
+            });
+        </script>
+    </body>
+</html>
